@@ -1,5 +1,5 @@
 name: calculator
-description: "A neumorphic calculator"
+description: "A Calculator, yeah its nothing more."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -9,7 +9,8 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  flutter_inset_shadow: ^2.0.3
+  google_fonts: ^6.2.1
+  function_tree: ^0.9.1
 
 dev_dependencies:
   flutter_test:
