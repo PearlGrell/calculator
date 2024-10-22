@@ -20,16 +20,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   bool _fx = false;
   String? _button;
 
-
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery
-        .of(context)
-        .size;
+    final size = MediaQuery.of(context).size;
     final padding = size.width * 0.04;
     return Scaffold(
       appBar: AppBar(
-        leading:IconButton(
+        leading: IconButton(
           onPressed: () async {
             final history = await HistoryDatabase.instance.getHistory();
             Navigator.push(
@@ -71,7 +68,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             child: GestureDetector(
               onHorizontalDragEnd: (details) {
                 setState(
-                      () {
+                  () {
                     if (_input.isNotEmpty) {
                       _input = _input.substring(0, _input.length - 1);
                       _calculateLiveResult();
@@ -89,33 +86,31 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   children: [
                     _fx
                         ? SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      reverse: true,
-                      child: Text(
-                        _input,
-                        softWrap: !_fx,
-                        style: TextStyle(
-                          fontSize: size.width * 0.07,
-                          color: Theme
-                              .of(context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.75),
-                        ),
-                      ),
-                    )
+                            scrollDirection: Axis.horizontal,
+                            reverse: true,
+                            child: Text(
+                              _input,
+                              softWrap: !_fx,
+                              style: TextStyle(
+                                fontSize: size.width * 0.07,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.75),
+                              ),
+                            ),
+                          )
                         : Text(
-                      _input,
-                      softWrap: !_fx,
-                      style: TextStyle(
-                        fontSize: size.width * 0.07,
-                        color: Theme
-                            .of(context)
-                            .colorScheme
-                            .onSurface
-                            .withOpacity(0.75),
-                      ),
-                    ),
+                            _input,
+                            softWrap: !_fx,
+                            style: TextStyle(
+                              fontSize: size.width * 0.07,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withOpacity(0.75),
+                            ),
+                          ),
                     AnimatedSize(
                       duration: const Duration(milliseconds: 200),
                       curve: Curves.easeInOut,
@@ -130,15 +125,11 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                                 : size.width * 0.07,
                             fontWeight: FontWeight.bold,
                             color: _result
-                                ? Theme
-                                .of(context)
-                                .colorScheme
-                                .onSurface
-                                : Theme
-                                .of(context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.4),
+                                ? Theme.of(context).colorScheme.onSurface
+                                : Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.4),
                           ),
                         ),
                       ),
@@ -150,20 +141,41 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           ),
           Flexible(
             flex: _fx ? 16 : 8,
-            child: BottomSheet(
-              onClosing: () {},
-              showDragHandle: true,
-              builder: (context) {
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  child: Column(
+            child: GestureDetector(
+              onPanUpdate: (details) {
+                if (details.delta.dy < -10) {
+                  setState(() {
+                    _fx = true;
+                  });
+                } else if (details.delta.dy > 10) {
+                  setState(() {
+                    _fx = false;
+                  });
+                }
+              },
+              onPanEnd: (details) {
+                if (details.velocity.pixelsPerSecond.dy < -500) {
+                  setState(() {
+                    _fx = true;
+                  });
+                } else if (details.velocity.pixelsPerSecond.dy > 500) {
+                  setState(() {
+                    _fx = false;
+                  });
+                }
+              },
+              child: BottomSheet(
+                onClosing: () {},
+                showDragHandle: true,
+                builder: (context) {
+                  return Column(
                     children: [
                       if (_fx) _buildAdditionalFunctionGrid(),
                       _buildStandardFunctionGrid(),
                     ],
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
         ],
@@ -217,47 +229,18 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   Widget _buildButton(String label) {
-    final size = MediaQuery
-        .of(context)
-        .size;
+    final size = MediaQuery.of(context).size;
     final buttonSize = size.width * 0.2;
     final buttonFontSize = size.width * 0.056;
-    final buttonList = [
-      "0",
-      "1",
-      "2",
-      "3",
-      "4",
-      "5",
-      "6",
-      "7",
-      "8",
-      "9",
-      ".",
-      "( )"
-    ];
+    final buttonList = ["AC", "clear", "%", "÷", "×", "-", "+", "="];
 
-    Color buttonColor(String label) =>
-        (buttonList.contains(label)
-            ? Theme
-            .of(context)
-            .colorScheme
-            .secondaryContainer
-            : Theme
-            .of(context)
-            .colorScheme
-            .tertiaryContainer);
+    Color buttonColor(String label) => (buttonList.contains(label)
+        ? Theme.of(context).colorScheme.tertiaryContainer
+        : Theme.of(context).colorScheme.secondaryContainer);
 
-    Color onButtonColor(String label) =>
-        (buttonList.contains(label)
-            ? Theme
-            .of(context)
-            .colorScheme
-            .onSecondaryContainer
-            : Theme
-            .of(context)
-            .colorScheme
-            .onTertiaryContainer);
+    Color onButtonColor(String label) => (buttonList.contains(label)
+        ? Theme.of(context).colorScheme.onTertiaryContainer
+        : Theme.of(context).colorScheme.onSecondaryContainer);
 
     return Expanded(
       child: Padding(
@@ -272,7 +255,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             decoration: BoxDecoration(
               color: buttonColor(label),
               borderRadius:
-              BorderRadius.circular(_button == label ? 16.0 : 50.0),
+                  BorderRadius.circular(_button == label ? 16.0 : 50.0),
             ),
             child: Center(
               child: _buildButtonContent(
@@ -286,7 +269,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   void _handleButtonPress(String label) {
     setState(
-          () {
+      () {
         _button = label;
         _result = false;
 
@@ -303,12 +286,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           }
         } else {
           if (label == "( )") {
-            int openBrackets = '('
-                .allMatches(_input)
-                .length;
-            int closeBrackets = ')'
-                .allMatches(_input)
-                .length;
+            int openBrackets = '('.allMatches(_input).length;
+            int closeBrackets = ')'.allMatches(_input).length;
 
             if (_input.isEmpty || RegExp(r'[÷×\-+()]$').hasMatch(_input)) {
               _input += "(";
@@ -329,9 +308,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
     Future.delayed(
       const Duration(milliseconds: 300),
-          () {
+      () {
         setState(
-              () {
+          () {
             _button = null;
           },
         );
@@ -412,7 +391,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     }
   }
 
-
   String _formatOutput(String output) {
     double? numOutput = double.tryParse(output);
 
@@ -432,15 +410,15 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     return output;
   }
 
-  Widget _buildButtonContent(String label, double fontSize,
-      Color operatorColor) {
+  Widget _buildButtonContent(
+      String label, double fontSize, Color operatorColor) {
     switch (label) {
       case '+':
-        return Icon(Icons.add, size: fontSize);
+        return Icon(Icons.add, size: fontSize, color: operatorColor);
       case '-':
-        return Icon(Icons.remove, size: fontSize);
+        return Icon(Icons.remove, size: fontSize, color: operatorColor);
       case '×':
-        return Icon(Icons.close, size: fontSize);
+        return Icon(Icons.close, size: fontSize, color: operatorColor);
       case '÷':
         return Text(
           "÷",
@@ -453,11 +431,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return Text(label,
             style: TextStyle(fontSize: fontSize * 0.8, color: operatorColor));
       case '%':
-        return Icon(Icons.percent, size: fontSize);
+        return Icon(Icons.percent, size: fontSize, color: operatorColor);
       case 'clear':
-        return Icon(Icons.backspace_outlined, size: fontSize);
+        return Icon(Icons.backspace_outlined,
+            size: fontSize, color: operatorColor);
       case '=':
-        return Icon(Icons.drag_handle_outlined, size: fontSize);
+        return Icon(Icons.drag_handle_outlined,
+            size: fontSize, color: operatorColor);
       default:
         return Text(
           label,
