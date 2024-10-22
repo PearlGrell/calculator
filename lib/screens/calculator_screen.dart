@@ -1,5 +1,10 @@
+import 'package:calculator/provider/history_database.dart';
+import 'package:calculator/screens/extras_screen.dart';
+import 'package:calculator/screens/history_screen.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:function_tree/function_tree.dart';
+import 'package:material_symbols_icons/symbols.dart';
 
 class CalculatorScreen extends StatefulWidget {
   const CalculatorScreen({super.key});
@@ -11,27 +16,68 @@ class CalculatorScreen extends StatefulWidget {
 class _CalculatorScreenState extends State<CalculatorScreen> {
   String _input = "";
   String _output = "";
-  bool _isEqualPressed = false;
-  String? _activeButton;
+  bool _result = false;
+  bool _fx = false;
+  String? _button;
+
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery
+        .of(context)
+        .size;
     final padding = size.width * 0.04;
     return Scaffold(
+      appBar: AppBar(
+        leading:IconButton(
+          onPressed: () async {
+            final history = await HistoryDatabase.instance.getHistory();
+            Navigator.push(
+              context,
+              CupertinoPageRoute(
+                builder: (context) => HistoryScreen(history: history),
+              ),
+            );
+          },
+          icon: const Icon(Symbols.history),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _fx = !_fx;
+              });
+            },
+            icon: const Icon(Symbols.function),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => const ExtrasScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Symbols.more_vert),
+          )
+        ],
+      ),
       body: Flex(
         direction: Axis.vertical,
         children: [
           Flexible(
-            flex: 5,
+            flex: _fx ? 3 : 4,
             child: GestureDetector(
               onHorizontalDragEnd: (details) {
-                setState(() {
-                  if (_input.isNotEmpty) {
-                    _input = _input.substring(0, _input.length - 1);
-                    _calculateLiveResult();
-                  }
-                });
+                setState(
+                      () {
+                    if (_input.isNotEmpty) {
+                      _input = _input.substring(0, _input.length - 1);
+                      _calculateLiveResult();
+                    }
+                  },
+                );
               },
               child: Container(
                 padding: EdgeInsets.all(padding),
@@ -41,27 +87,59 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Text(
+                    _fx
+                        ? SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      reverse: true,
+                      child: Text(
+                        _input,
+                        softWrap: !_fx,
+                        style: TextStyle(
+                          fontSize: size.width * 0.07,
+                          color: Theme
+                              .of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.75),
+                        ),
+                      ),
+                    )
+                        : Text(
                       _input,
+                      softWrap: !_fx,
                       style: TextStyle(
                         fontSize: size.width * 0.07,
-                        color: Colors.grey,
+                        color: Theme
+                            .of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.75),
                       ),
                     ),
                     AnimatedSize(
                       duration: const Duration(milliseconds: 200),
                       curve: Curves.easeInOut,
-                      child: Text(
-                        _output,
-                        style: TextStyle(
-                          fontSize: _isEqualPressed ? size.width * 0.14 : size.width * 0.07,
-                          fontWeight: FontWeight.bold,
-                          color: _isEqualPressed
-                              ? Theme.of(context).colorScheme.onSurface
-                              : Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withOpacity(0.4),
+                      child: Container(
+                        width: size.width,
+                        alignment: Alignment.bottomRight,
+                        child: Text(
+                          _output,
+                          style: TextStyle(
+                            fontSize: _result && !_fx
+                                ? size.width * 0.14
+                                : size.width * 0.07,
+                            fontWeight: FontWeight.bold,
+                            color: _result
+                                ? Theme
+                                .of(context)
+                                .colorScheme
+                                .onSurface
+                                : Theme
+                                .of(context)
+                                .colorScheme
+                                .onSurface
+                                .withOpacity(0.4),
+                          ),
                         ),
                       ),
                     ),
@@ -71,13 +149,21 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             ),
           ),
           Flexible(
-            flex: 8,
+            flex: _fx ? 16 : 8,
             child: BottomSheet(
               onClosing: () {},
               showDragHandle: true,
-              builder: (context) => Column(
-                children: _buildButtonGrid(),
-              ),
+              builder: (context) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  child: Column(
+                    children: [
+                      if (_fx) _buildAdditionalFunctionGrid(),
+                      _buildStandardFunctionGrid(),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -85,7 +171,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     );
   }
 
-  List<Widget> _buildButtonGrid() {
+  Widget _buildStandardFunctionGrid() {
     final buttonLabels = [
       ["AC", "clear", "%", "÷"],
       ["7", "8", "9", "×"],
@@ -94,54 +180,84 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       ["0", ".", "( )", "="]
     ];
 
-    return buttonLabels.map((row) {
-      return Flexible(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: row.map((label) => _buildButton(label)).toList(),
-        ),
-      );
-    }).toList();
+    return Flexible(
+      flex: 8,
+      child: Column(
+        children: buttonLabels.map((row) {
+          return Flexible(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: row.map((label) => _buildButton(label)).toList(),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildAdditionalFunctionGrid() {
+    final additionalButtonLabels = [
+      ["sin", "cos", "tan", "log"],
+      ["ln", "√", "^", "!"]
+    ];
+
+    return Flexible(
+      flex: 3,
+      child: Column(
+        children: additionalButtonLabels.map((row) {
+          return Flexible(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: row.map((label) => _buildButton(label)).toList(),
+            ),
+          );
+        }).toList(),
+      ),
+    );
   }
 
   Widget _buildButton(String label) {
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery
+        .of(context)
+        .size;
     final buttonSize = size.width * 0.2;
     final buttonFontSize = size.width * 0.056;
+    final buttonList = [
+      "0",
+      "1",
+      "2",
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      ".",
+      "( )"
+    ];
 
-    Color buttonColor(String label) => ([
-          "0",
-          "1",
-          "2",
-          "3",
-          "4",
-          "5",
-          "6",
-          "7",
-          "8",
-          "9",
-          ".",
-          "( )"
-        ].contains(label)
-            ? Theme.of(context).colorScheme.secondaryContainer
-            : Theme.of(context).colorScheme.tertiaryContainer);
+    Color buttonColor(String label) =>
+        (buttonList.contains(label)
+            ? Theme
+            .of(context)
+            .colorScheme
+            .secondaryContainer
+            : Theme
+            .of(context)
+            .colorScheme
+            .tertiaryContainer);
 
-    Color onButtonColor(String label) => ([
-          "0",
-          "1",
-          "2",
-          "3",
-          "4",
-          "5",
-          "6",
-          "7",
-          "8",
-          "9",
-          ".",
-          "( )"
-        ].contains(label)
-            ? Theme.of(context).colorScheme.onSecondaryContainer
-            : Theme.of(context).colorScheme.onTertiaryContainer);
+    Color onButtonColor(String label) =>
+        (buttonList.contains(label)
+            ? Theme
+            .of(context)
+            .colorScheme
+            .onSecondaryContainer
+            : Theme
+            .of(context)
+            .colorScheme
+            .onTertiaryContainer);
 
     return Expanded(
       child: Padding(
@@ -156,7 +272,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             decoration: BoxDecoration(
               color: buttonColor(label),
               borderRadius:
-                  BorderRadius.circular(_activeButton == label ? 16.0 : 50.0),
+              BorderRadius.circular(_button == label ? 16.0 : 50.0),
             ),
             child: Center(
               child: _buildButtonContent(
@@ -169,50 +285,66 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   void _handleButtonPress(String label) {
-    setState(() {
-      _activeButton = label;
-      _isEqualPressed = false;
+    setState(
+          () {
+        _button = label;
+        _result = false;
 
-      if (label == 'AC') {
-        _input = "";
-        _output = "";
-      } else if (label == '=') {
-        _isEqualPressed = true;
-        _calculateResult();
-      } else if (label == 'clear') {
-        if (_input.isNotEmpty) {
-          _input = _input.substring(0, _input.length - 1);
-          _calculateLiveResult();
-        }
-      } else {
-        if (label == "( )") {
-          int openBrackets = '('.allMatches(_input).length;
-          int closeBrackets = ')'.allMatches(_input).length;
-
-          if (_input.isEmpty || RegExp(r'[÷×\-+()]$').hasMatch(_input)) {
-            _input += "(";
-          } else if (openBrackets > closeBrackets) {
-            _input += ")";
-          } else {
-            _input += "(";
+        if (label == 'AC') {
+          _input = "";
+          _output = "";
+        } else if (label == '=') {
+          _result = true;
+          _calculateResult();
+        } else if (label == 'clear') {
+          if (_input.isNotEmpty) {
+            _input = _input.substring(0, _input.length - 1);
+            _calculateLiveResult();
           }
         } else {
-          _input += label;
-        }
-        _calculateLiveResult();
-      }
-    });
+          if (label == "( )") {
+            int openBrackets = '('
+                .allMatches(_input)
+                .length;
+            int closeBrackets = ')'
+                .allMatches(_input)
+                .length;
 
-    Future.delayed(const Duration(milliseconds: 300), () {
-      setState(() {
-        _activeButton = null;
-      });
-    });
+            if (_input.isEmpty || RegExp(r'[÷×\-+()]$').hasMatch(_input)) {
+              _input += "(";
+            } else if (openBrackets > closeBrackets) {
+              _input += ")";
+            } else {
+              _input += "(";
+            }
+          } else if (["sin", "cos", "tan", "log", "ln", "√"].contains(label)) {
+            _input += "$label(";
+          } else {
+            _input += label;
+          }
+          _calculateLiveResult();
+        }
+      },
+    );
+
+    Future.delayed(
+      const Duration(milliseconds: 300),
+          () {
+        setState(
+              () {
+            _button = null;
+          },
+        );
+      },
+    );
   }
 
   void _calculateLiveResult() {
     if (_input.isNotEmpty) {
-      String expression = _input.replaceAll("×", "*").replaceAll("÷", "/");
+      String expression = _input
+          .replaceAll("×", "*")
+          .replaceAll("÷", "/")
+          .replaceAll("√", "sqrt");
       try {
         final result = expression.interpret().toString();
         setState(() {
@@ -226,13 +358,51 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     }
   }
 
+  String _getFormattedDate() {
+    final now = DateTime.now();
+    return "${now.day} ${getMonthName(now.month)}, ${now.year}";
+  }
+
+  String getMonthName(int monthNumber) {
+    const List<String> monthNames = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
+    ];
+
+    if (monthNumber < 1 || monthNumber > 12) {
+      throw ArgumentError('Month number must be between 1 and 12.');
+    }
+
+    return monthNames[monthNumber - 1];
+  }
+
   void _calculateResult() {
     if (_input.isNotEmpty) {
-      String expression = _input.replaceAll("×", "*").replaceAll("÷", "/");
+      String expression = _input
+          .replaceAll("×", "*")
+          .replaceAll("÷", "/")
+          .replaceAll("√", "sqrt");
       try {
         final result = expression.interpret().toString();
         setState(() {
           _output = _formatOutput(result);
+          String dateKey = _getFormattedDate();
+          Map<String, String> historyItem = {
+            'date': dateKey,
+            'input': _input,
+            'output': _output,
+          };
+          HistoryDatabase.instance.insertHistory(historyItem);
         });
       } catch (e) {
         setState(() {
@@ -242,17 +412,19 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     }
   }
 
+
   String _formatOutput(String output) {
     double? numOutput = double.tryParse(output);
 
     if (numOutput != null) {
-      if (numOutput.abs() > 1000000 || numOutput.abs() < 0.000001) {
+      if ((numOutput.abs() > 1000000 || numOutput.abs() < 0.000001) &&
+          numOutput != 0) {
         return numOutput.toStringAsExponential(2);
       } else {
         if (numOutput == numOutput.toInt()) {
           return numOutput.toInt().toString();
         } else {
-          return numOutput.toString();
+          return double.parse(numOutput.toStringAsFixed(6)).toString();
         }
       }
     }
@@ -260,8 +432,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     return output;
   }
 
-  Widget _buildButtonContent(
-      String label, double fontSize, Color operatorColor) {
+  Widget _buildButtonContent(String label, double fontSize,
+      Color operatorColor) {
     switch (label) {
       case '+':
         return Icon(Icons.add, size: fontSize);
@@ -290,8 +462,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         return Text(
           label,
           style: TextStyle(
-              fontSize: label == "AC" ? fontSize * 0.8 : fontSize,
-              color: operatorColor),
+            fontSize: label == "AC" ? fontSize * 0.8 : fontSize,
+            color: operatorColor,
+          ),
         );
     }
   }
