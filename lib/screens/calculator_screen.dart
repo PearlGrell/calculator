@@ -268,54 +268,65 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   void _handleButtonPress(String label) {
-    setState(
-      () {
-        _button = label;
-        _result = false;
+    setState(() {
+      _button = label;
+      _result = false;
 
-        if (label == 'AC') {
-          _input = "";
-          _output = "";
-        } else if (label == '=') {
-          _result = true;
-          _calculateResult();
-        } else if (label == 'clear') {
-          if (_input.isNotEmpty) {
-            _input = _input.substring(0, _input.length - 1);
-            _calculateLiveResult();
-          }
-        } else {
-          if (label == "( )") {
-            int openBrackets = '('.allMatches(_input).length;
-            int closeBrackets = ')'.allMatches(_input).length;
-
-            if (_input.isEmpty || RegExp(r'[÷×\-+()]$').hasMatch(_input)) {
-              _input += "(";
-            } else if (openBrackets > closeBrackets) {
-              _input += ")";
-            } else {
-              _input += "(";
-            }
-          } else if (["sin", "cos", "tan", "log", "ln", "√"].contains(label)) {
-            _input += "$label(";
-          } else {
-            _input += label;
-          }
+      if (label == 'AC') {
+        _input = "";
+        _output = "";
+      } else if (label == '=') {
+        _result = true;
+        _calculateResult();
+      } else if (label == 'clear') {
+        if (_input.isNotEmpty) {
+          _input = _input.substring(0, _input.length - 1);
           _calculateLiveResult();
         }
-      },
-    );
+      } else if (label == "( )") {
+        if (_input.isEmpty ||
+            _input.endsWith('(') ||
+            isOperator(_input[_input.length - 1])) {
+          _input += "(";
+        } else {
+          int openBrackets = 0;
+          int closeBrackets = 0;
+
+          for (int i = 0; i < _input.length; i++) {
+            if (_input[i] == '(') openBrackets++;
+            if (_input[i] == ')') closeBrackets++;
+          }
+
+          if (openBrackets > closeBrackets) {
+            _input += ")";
+          } else {
+            _input += "(";
+          }
+        }
+      } else if (["sin", "cos", "tan", "log", "ln", "√"].contains(label)) {
+        _input += "$label(";
+      } else {
+        _input += label;
+      }
+      _calculateLiveResult();
+    });
 
     Future.delayed(
       const Duration(milliseconds: 300),
       () {
-        setState(
-          () {
-            _button = null;
-          },
-        );
+        setState(() {
+          _button = null;
+        });
       },
     );
+  }
+
+  bool isOperator(String char) {
+    return char == '÷' ||
+        char == '×' ||
+        char == '-' ||
+        char == '+' ||
+        char == '(';
   }
 
   void _calculateLiveResult() {
