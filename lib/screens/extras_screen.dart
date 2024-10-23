@@ -1,5 +1,4 @@
 import 'package:calculator/screens/bmi_screen.dart';
-import 'package:calculator/screens/currency_converter.dart';
 import 'package:calculator/screens/emi_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -43,12 +42,6 @@ class ExtrasScreen extends StatelessWidget {
               'BMI',
               context,
               const BmiScreen(),
-            ),
-            _buildGridItem(
-              Icons.currency_exchange,
-              'Currency Converter',
-              context,
-              const CurrencyConverter(),
             ),
           ],
         ),
