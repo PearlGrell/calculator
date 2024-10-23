@@ -21,6 +21,5 @@ A versatile calculator application built with Flutter, featuring standard arithm
 - SQLite database
 
 - Created By:
-
-- ```bash
+ ```bash
   Aryan Trivedi
