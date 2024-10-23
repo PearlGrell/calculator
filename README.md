@@ -20,6 +20,6 @@ A versatile calculator application built with Flutter, featuring standard arithm
 - Dart SDK
 - SQLite database
 
-- Created By:
+###Created By:
  ```bash
   Aryan Trivedi
