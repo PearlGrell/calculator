@@ -24,4 +24,4 @@ A versatile calculator application built with Flutter, featuring standard arithm
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/PearlGrell/hg_assignment.git
+   git clone https://github.com/PearlGrell/calculator.git
