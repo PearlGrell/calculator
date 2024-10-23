@@ -20,8 +20,7 @@ A versatile calculator application built with Flutter, featuring standard arithm
 - Dart SDK
 - SQLite database
 
-### Installation
+- Created By:
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/PearlGrell/calculator.git
+- ```bash
+  Aryan Trivedi
